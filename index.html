@@ -1229,11 +1229,38 @@
     </div>
 
     <script>
-        // Configuración de administrador
-        const ADMIN_PASSWORD = '13666'; // Cambia esta contraseña por la que desees
+        // Configuración de administrador - SEGURIDAD MEJORADA
+        // ⚠️ La contraseña se almacena como hash SHA-256 para mayor seguridad
+        // Hash de la contraseña: '13666' (puedes cambiarla generando un nuevo hash)
+        const ADMIN_PASSWORD_HASH = '8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4'; // Hash SHA-256 de '13666'
         const ADMIN_IMAGE_KEY = 'adminIconImage';
         const ADMIN_IMAGE_PUBLISHED_KEY = 'adminIconImagePublished'; // Imagen publicada (persistente)
         const ADMIN_SESSION_KEY = 'isAdmin';
+        
+        // Función para generar hash SHA-256 de una cadena (para generar nuevas contraseñas)
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+        
+        // Función para verificar contraseña de forma segura
+        async function verifyPassword(inputPassword) {
+            try {
+                const inputHash = await sha256(inputPassword);
+                return inputHash === ADMIN_PASSWORD_HASH;
+            } catch (error) {
+                console.error('Error al verificar contraseña:', error);
+                return false;
+            }
+        }
+        
+        // Función de utilidad para generar hash de nueva contraseña
+        // Usa esto en la consola del navegador para generar un nuevo hash:
+        // sha256('tu-nueva-contraseña').then(hash => console.log('Hash:', hash))
+        // Luego reemplaza ADMIN_PASSWORD_HASH con el nuevo hash generado
         const ADMIN_ICON_FILENAME = 'admin-icon'; // Nombre del archivo en el repositorio (sin extensión)
         const ADMIN_ICON_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']; // Extensiones permitidas
         
@@ -2031,12 +2058,35 @@
                 });
             }
 
-            // Login
+            // Login con verificación segura usando hash
             if (adminLoginBtn) {
-                adminLoginBtn.addEventListener('click', function() {
+                adminLoginBtn.addEventListener('click', async function() {
                     const password = adminPasswordInput ? adminPasswordInput.value : '';
                     
-                    if (password === ADMIN_PASSWORD) {
+                    if (!password) {
+                        if (adminError) {
+                            adminError.textContent = 'Por favor, ingresa la contraseña';
+                            adminError.classList.add('show');
+                        }
+                        return;
+                    }
+                    
+                    // Deshabilitar botón mientras se verifica
+                    if (adminLoginBtn) {
+                        adminLoginBtn.disabled = true;
+                        adminLoginBtn.textContent = 'Verificando...';
+                    }
+                    
+                    // Verificar contraseña de forma segura (comparación de hashes)
+                    const isValid = await verifyPassword(password);
+                    
+                    // Rehabilitar botón
+                    if (adminLoginBtn) {
+                        adminLoginBtn.disabled = false;
+                        adminLoginBtn.textContent = 'Iniciar Sesión';
+                    }
+                    
+                    if (isValid) {
                         setAdminStatus(true);
                         if (adminModal) {
                             adminModal.classList.remove('active');
@@ -2049,6 +2099,7 @@
                         }
                     } else {
                         if (adminError) {
+                            adminError.textContent = 'Contraseña incorrecta';
                             adminError.classList.add('show');
                         }
                         if (adminPasswordInput) {
@@ -2061,10 +2112,10 @@
 
             // Login con Enter
             if (adminPasswordInput) {
-                adminPasswordInput.addEventListener('keypress', function(e) {
+                adminPasswordInput.addEventListener('keypress', async function(e) {
                     if (e.key === 'Enter') {
                         if (adminLoginBtn) {
-                            adminLoginBtn.click();
+                            await adminLoginBtn.click();
                         }
                     }
                 });
