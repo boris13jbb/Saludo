@@ -1159,6 +1159,7 @@
                     <label for="image-upload" class="image-upload-btn">📷 Cargar Imagen</label>
                     <button id="publish-image" class="publish-image-btn" style="display: none;">🌐 Publicar Imagen</button>
                     <button id="remove-image" class="remove-image-btn" style="display: none;">✖️ Quitar Imagen</button>
+                    <button id="github-config-btn" class="image-upload-btn" style="margin-top: 5px; background: linear-gradient(135deg, #24292e 0%, #586069 100%);">⚙️ Configurar GitHub</button>
                 </div>
             </div>
             
@@ -1202,6 +1203,30 @@
         </div>
     </div>
 
+    <!-- Modal de configuración de GitHub -->
+    <div class="admin-modal" id="github-config-modal">
+        <div class="admin-modal-content">
+            <h2>Configuración de GitHub</h2>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px; text-align: left;">
+                Para habilitar la actualización automática de imágenes, necesitas un <strong>GitHub Personal Access Token</strong>.
+            </p>
+            <input type="text" id="github-token-input" placeholder="GitHub Personal Access Token" autocomplete="off" style="margin-bottom: 10px;">
+            <input type="text" id="github-repo-input" placeholder="Repositorio (usuario/repo)" value="boris13jbb/Saludo" style="margin-bottom: 10px;">
+            <input type="text" id="github-branch-input" placeholder="Rama (main o master)" value="main" style="margin-bottom: 20px;">
+            <div class="admin-error" id="github-error" style="display: none;">Error en la configuración</div>
+            <div class="admin-modal-buttons">
+                <button class="admin-btn admin-btn-primary" id="github-save-btn">Guardar</button>
+                <button class="admin-btn admin-btn-secondary" id="github-cancel-btn">Cancelar</button>
+            </div>
+            <p style="font-size: 12px; color: #999; margin-top: 15px; text-align: left;">
+                💡 Cómo obtener un token:<br>
+                1. Ve a GitHub.com → Settings → Developer settings → Personal access tokens → Tokens (classic)<br>
+                2. Genera un nuevo token con permisos <strong>repo</strong><br>
+                3. Copia y pega el token aquí
+            </p>
+        </div>
+    </div>
+
     <script>
         // Configuración de administrador
         const ADMIN_PASSWORD = '13666'; // Cambia esta contraseña por la que desees
@@ -1210,6 +1235,20 @@
         const ADMIN_SESSION_KEY = 'isAdmin';
         const ADMIN_ICON_FILENAME = 'admin-icon'; // Nombre del archivo en el repositorio (sin extensión)
         const ADMIN_ICON_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']; // Extensiones permitidas
+        
+        // Configuración de GitHub (para actualización automática)
+        // IMPORTANTE: Configura estos valores según tu repositorio
+        const GITHUB_CONFIG = {
+            enabled: false, // Cambia a true para habilitar actualización automática
+            token: '', // Tu GitHub Personal Access Token (se guarda en localStorage)
+            repo: 'boris13jbb/Saludo', // Formato: usuario/repositorio
+            branch: 'main', // Rama del repositorio (main o master)
+            path: 'image', // Carpeta donde se guardará la imagen
+            username: 'boris13jbb' // Tu nombre de usuario de GitHub
+        };
+        
+        // Clave para guardar el token de GitHub de forma segura
+        const GITHUB_TOKEN_KEY = 'githubToken';
 
         // Verificar si es administrador
         function isAdmin() {
@@ -1527,8 +1566,106 @@
             URL.revokeObjectURL(url);
         }
 
+        // Función para convertir base64 a formato para GitHub API
+        function base64ToGitHubFormat(base64String) {
+            // Remover el prefijo data:image/...;base64,
+            const base64Data = base64String.split(',')[1];
+            return base64Data;
+        }
+
+        // Función para obtener el SHA del archivo actual (si existe)
+        async function getFileSHA(filename) {
+            if (!GITHUB_CONFIG.enabled) return null;
+            
+            const token = localStorage.getItem(GITHUB_TOKEN_KEY) || GITHUB_CONFIG.token;
+            if (!token) return null;
+
+            try {
+                const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}/${filename}`;
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.sha; // SHA del archivo existente
+                }
+                return null; // Archivo no existe
+            } catch (error) {
+                console.error('Error al obtener SHA del archivo:', error);
+                return null;
+            }
+        }
+
+        // Función para subir imagen a GitHub automáticamente
+        async function uploadImageToGitHub(imageBase64, extension) {
+            if (!GITHUB_CONFIG.enabled) {
+                return { success: false, message: 'Actualización automática deshabilitada' };
+            }
+
+            const token = localStorage.getItem(GITHUB_TOKEN_KEY) || GITHUB_CONFIG.token;
+            if (!token) {
+                return { success: false, message: 'Token de GitHub no configurado' };
+            }
+
+            const filename = `${ADMIN_ICON_FILENAME}.${extension}`;
+            const filePath = `${GITHUB_CONFIG.path}/${filename}`;
+            const content = base64ToGitHubFormat(imageBase64);
+            
+            try {
+                // Obtener SHA del archivo si existe (para actualizar)
+                const sha = await getFileSHA(filename);
+                
+                const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${filePath}`;
+                const body = {
+                    message: `Actualizar imagen del administrador: ${filename}`,
+                    content: content,
+                    branch: GITHUB_CONFIG.branch
+                };
+
+                // Si el archivo existe, agregar el SHA para actualizarlo
+                if (sha) {
+                    body.sha = sha;
+                }
+
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    return { 
+                        success: true, 
+                        message: 'Imagen subida exitosamente a GitHub',
+                        commitUrl: data.commit.html_url
+                    };
+                } else {
+                    const errorData = await response.json();
+                    return { 
+                        success: false, 
+                        message: errorData.message || 'Error al subir la imagen'
+                    };
+                }
+            } catch (error) {
+                console.error('Error al subir imagen a GitHub:', error);
+                return { 
+                    success: false, 
+                    message: `Error de conexión: ${error.message}`
+                };
+            }
+        }
+
         // Función para publicar imagen (hacerla persistente para todos)
-        function publishAdminImage() {
+        async function publishAdminImage() {
             if (!isAdmin()) return;
             
             const savedImage = localStorage.getItem(ADMIN_IMAGE_KEY);
@@ -1540,16 +1677,38 @@
                 const mimeMatch = savedImage.match(/data:image\/([^;]+)/);
                 const extension = mimeMatch ? mimeMatch[1] : 'png';
                 
-                // Descargar la imagen para que el admin la suba al repositorio
+                // Actualizar la visualización inmediatamente
+                await loadAdminImage();
+                
+                // Intentar subir a GitHub automáticamente si está habilitado
+                let githubResult = null;
+                if (GITHUB_CONFIG.enabled) {
+                    const token = localStorage.getItem(GITHUB_TOKEN_KEY) || GITHUB_CONFIG.token;
+                    if (token) {
+                        // Mostrar mensaje de carga
+                        const loadingMsg = document.createElement('div');
+                        loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.3);z-index:10000;';
+                        loadingMsg.innerHTML = '⏳ Subiendo imagen a GitHub...';
+                        document.body.appendChild(loadingMsg);
+                        
+                        githubResult = await uploadImageToGitHub(savedImage, extension);
+                        document.body.removeChild(loadingMsg);
+                    }
+                }
+                
+                // Descargar la imagen como respaldo
                 downloadImageAsFile(savedImage, `${ADMIN_ICON_FILENAME}.${extension}`);
                 
-                // Actualizar la visualización inmediatamente
-                loadAdminImage().then(() => {
-                    // Mostrar instrucciones después de cargar
-                    setTimeout(() => {
-                        alert(`✅ Imagen publicada exitosamente!\n\n📥 Se ha descargado el archivo: ${ADMIN_ICON_FILENAME}.${extension}\n\n📋 INSTRUCCIONES IMPORTANTES:\n1. Sube el archivo descargado a la carpeta "image/" de tu repositorio\n2. El nombre DEBE ser exactamente: ${ADMIN_ICON_FILENAME}.${extension}\n3. Haz commit y push a GitHub\n4. Espera unos minutos para que GitHub Pages actualice\n5. Todos los usuarios verán la imagen automáticamente\n\n⚠️ NOTA: Sin subirla al repositorio, solo usuarios que ya visitaron el sitio la verán.`);
-                    }, 500);
-                });
+                // Mostrar resultado
+                setTimeout(() => {
+                    if (githubResult && githubResult.success) {
+                        alert(`✅ Imagen publicada exitosamente!\n\n🌐 ${githubResult.message}\n\n📋 La imagen se ha actualizado automáticamente en GitHub.\n\n🔗 Commit: ${githubResult.commitUrl}\n\n⏱️ Espera 1-2 minutos para que GitHub Pages actualice.\n\n✅ Todos los usuarios verán la imagen automáticamente.`);
+                    } else if (GITHUB_CONFIG.enabled && !githubResult) {
+                        alert(`✅ Imagen guardada localmente.\n\n⚠️ No se pudo subir a GitHub automáticamente.\n\n📥 Se ha descargado el archivo: ${ADMIN_ICON_FILENAME}.${extension}\n\n📋 INSTRUCCIONES:\n1. Sube el archivo descargado a la carpeta "image/" de tu repositorio\n2. El nombre DEBE ser: ${ADMIN_ICON_FILENAME}.${extension}\n3. Haz commit y push a GitHub`);
+                    } else {
+                        alert(`✅ Imagen publicada localmente!\n\n📥 Se ha descargado el archivo: ${ADMIN_ICON_FILENAME}.${extension}\n\n📋 INSTRUCCIONES:\n1. Sube el archivo descargado a la carpeta "image/" de tu repositorio\n2. El nombre DEBE ser: ${ADMIN_ICON_FILENAME}.${extension}\n3. Haz commit y push a GitHub\n4. Espera 1-2 minutos para que GitHub Pages actualice\n\n💡 Para habilitar actualización automática, configura GITHUB_CONFIG en el código.`);
+                    }
+                }, 500);
             } else {
                 alert('⚠️ No hay imagen para publicar. Por favor, carga una imagen primero.');
             }
@@ -1634,6 +1793,83 @@
 
             if (publishBtn) {
                 publishBtn.addEventListener('click', publishAdminImage);
+            }
+
+            // Botón de configuración de GitHub
+            const githubConfigBtn = document.getElementById('github-config-btn');
+            const githubConfigModal = document.getElementById('github-config-modal');
+            if (githubConfigBtn && githubConfigModal) {
+                githubConfigBtn.addEventListener('click', function() {
+                    githubConfigModal.classList.add('active');
+                });
+            }
+        }
+
+        // Manejar configuración de GitHub
+        function setupGitHubConfig() {
+            const githubModal = document.getElementById('github-config-modal');
+            const githubSaveBtn = document.getElementById('github-save-btn');
+            const githubCancelBtn = document.getElementById('github-cancel-btn');
+            const githubTokenInput = document.getElementById('github-token-input');
+            const githubRepoInput = document.getElementById('github-repo-input');
+            const githubBranchInput = document.getElementById('github-branch-input');
+            const githubError = document.getElementById('github-error');
+
+            // Cargar valores guardados
+            if (githubTokenInput) {
+                githubTokenInput.value = localStorage.getItem(GITHUB_TOKEN_KEY) || '';
+            }
+            if (githubRepoInput) {
+                githubRepoInput.value = localStorage.getItem(GITHUB_REPO_KEY) || GITHUB_CONFIG.repo;
+            }
+            if (githubBranchInput) {
+                githubBranchInput.value = localStorage.getItem(GITHUB_BRANCH_KEY) || GITHUB_CONFIG.branch;
+            }
+
+            // Guardar configuración
+            if (githubSaveBtn) {
+                githubSaveBtn.addEventListener('click', function() {
+                    const token = githubTokenInput ? githubTokenInput.value.trim() : '';
+                    const repo = githubRepoInput ? githubRepoInput.value.trim() : '';
+                    const branch = githubBranchInput ? githubBranchInput.value.trim() : '';
+
+                    if (token && repo && branch) {
+                        saveGitHubConfig(token, repo, branch);
+                        if (githubModal) {
+                            githubModal.classList.remove('active');
+                        }
+                        alert('✅ Configuración de GitHub guardada exitosamente!\n\nAhora las imágenes se subirán automáticamente cuando las publiques.');
+                    } else {
+                        if (githubError) {
+                            githubError.textContent = 'Por favor, completa todos los campos';
+                            githubError.style.display = 'block';
+                        }
+                    }
+                });
+            }
+
+            // Cancelar
+            if (githubCancelBtn) {
+                githubCancelBtn.addEventListener('click', function() {
+                    if (githubModal) {
+                        githubModal.classList.remove('active');
+                    }
+                    if (githubError) {
+                        githubError.style.display = 'none';
+                    }
+                });
+            }
+
+            // Cerrar modal al hacer clic fuera
+            if (githubModal) {
+                githubModal.addEventListener('click', function(e) {
+                    if (e.target === githubModal) {
+                        githubModal.classList.remove('active');
+                        if (githubError) {
+                            githubError.style.display = 'none';
+                        }
+                    }
+                });
             }
         }
 
@@ -1757,6 +1993,7 @@
         // Inicializar
         createParticles();
         setupAdminLogin();
+        setupGitHubConfig();
         updateAdminUI(); // Actualizar UI según estado de admin
         setupImageUpload();
         updateGreeting();
