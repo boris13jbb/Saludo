@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarjeta de Saludos Profesional</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: background 1.5s ease;
+            position: relative;
+        }
+
+        /* Fondos según la hora - Más sofisticados */
+        body.morning {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        }
+
+        body.afternoon {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
+        }
+
+        body.night {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1a237e 100%);
+        }
+
+        /* Partículas de fondo mejoradas */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: float linear infinite;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Contenedor de imágenes decorativas */
+        .image-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .decorative-image {
+            position: absolute;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            opacity: 0.7;
+            animation: floatImage 20s ease-in-out infinite;
+            filter: blur(0.5px);
+            transition: opacity 0.3s ease;
+        }
+
+        .decorative-image:hover {
+            opacity: 1;
+            filter: blur(0);
+            z-index: 10;
+        }
+
+        .decorative-image.top-left {
+            top: 5%;
+            left: 5%;
+            width: 120px;
+            height: auto;
+            animation-delay: 0s;
+        }
+
+        .decorative-image.top-right {
+            top: 8%;
+            right: 5%;
+            width: 100px;
+            height: auto;
+            animation-delay: 2s;
+        }
+
+        .decorative-image.bottom-left {
+            bottom: 10%;
+            left: 8%;
+            width: 110px;
+            height: auto;
+            animation-delay: 4s;
+        }
+
+        .decorative-image.bottom-right {
+            bottom: 8%;
+            right: 8%;
+            width: 130px;
+            height: auto;
+            animation-delay: 6s;
+        }
+
+        .decorative-image.mid-left {
+            top: 50%;
+            left: 3%;
+            transform: translateY(-50%);
+            width: 90px;
+            height: auto;
+            animation-delay: 1s;
+        }
+
+        .decorative-image.mid-right {
+            top: 50%;
+            right: 3%;
+            transform: translateY(-50%);
+            width: 95px;
+            height: auto;
+            animation-delay: 3s;
+        }
+
+        @keyframes floatImage {
+            0%, 100% {
+                transform: translateY(0) translateX(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-20px) translateX(10px) rotate(5deg);
+            }
+            50% {
+                transform: translateY(-10px) translateX(-10px) rotate(-5deg);
+            }
+            75% {
+                transform: translateY(-15px) translateX(5px) rotate(3deg);
+            }
+        }
+
+        /* Contenedor de la tarjeta mejorado */
+        .card-container {
+            position: relative;
+            z-index: 2;
+            perspective: 1200px;
+        }
+
+        .greeting-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 40px;
+            padding: 70px 90px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.5) inset,
+                0 0 100px rgba(255, 255, 255, 0.1) inset;
+            text-align: center;
+            min-width: 550px;
+            max-width: 90vw;
+            animation: cardEntrance 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: visible;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes cardEntrance {
+            0% {
+                transform: scale(0.7) rotateY(15deg) translateY(50px);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) rotateY(0deg) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Brillo mejorado en la tarjeta */
+        .card-shine {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.4) 50%,
+                transparent 70%
+            );
+            transform: rotate(45deg);
+            animation: shine 4s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shine {
+            0%, 100% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            50% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        /* Imágenes dentro de la tarjeta */
+        .card-images {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+            border-radius: 40px;
+        }
+
+        .card-image {
+            position: absolute;
+            border-radius: 15px;
+            opacity: 0.15;
+            animation: cardImageFloat 15s ease-in-out infinite;
+        }
+
+        .card-image.img-1 {
+            top: 10%;
+            left: 5%;
+            width: 80px;
+            animation-delay: 0s;
+        }
+
+        .card-image.img-2 {
+            top: 15%;
+            right: 5%;
+            width: 70px;
+            animation-delay: 3s;
+        }
+
+        .card-image.img-3 {
+            bottom: 15%;
+            left: 8%;
+            width: 75px;
+            animation-delay: 6s;
+        }
+
+        .card-image.img-4 {
+            bottom: 10%;
+            right: 8%;
+            width: 85px;
+            animation-delay: 9s;
+        }
+
+        @keyframes cardImageFloat {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                opacity: 0.15;
+            }
+            50% {
+                transform: translateY(-15px) scale(1.05);
+                opacity: 0.25;
+            }
+        }
+
+        /* Icono animado mejorado */
+        .icon-container {
+            font-size: 110px;
+            margin-bottom: 25px;
+            animation: bounce 2.5s ease-in-out infinite;
+            filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.2));
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0) scale(1) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-15px) scale(1.08) rotate(5deg);
+            }
+        }
+
+        /* Texto principal mejorado */
+        .greeting-text {
+            font-size: 52px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 25px;
+            animation: textGlow 3s ease-in-out infinite;
+            letter-spacing: -1px;
+            line-height: 1.2;
+            position: relative;
+            z-index: 1;
+        }
+
+        body.afternoon .greeting-text {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        body.night .greeting-text {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @keyframes textGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 15px rgba(102, 126, 234, 0.4));
+                transform: scale(1);
+            }
+            50% {
+                filter: drop-shadow(0 0 25px rgba(102, 126, 234, 0.7));
+                transform: scale(1.02);
+            }
+        }
+
+        /* Mensaje mejorado */
+        .message {
+            font-size: 22px;
+            color: #444;
+            margin-bottom: 20px;
+            animation: fadeIn 1.2s ease-in 0.6s both;
+            line-height: 1.8;
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(25px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Reloj mejorado */
+        .time-display {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-top: 30px;
+            font-family: 'Courier New', monospace;
+            animation: fadeIn 1.2s ease-in 1.2s both;
+            letter-spacing: 4px;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Decoración inferior mejorada */
+        .decoration {
+            margin-top: 35px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            animation: fadeIn 1.2s ease-in 1.8s both;
+            position: relative;
+            z-index: 1;
+        }
+
+        .decoration span {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        .decoration span:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+
+        .decoration span:nth-child(3) {
+            animation-delay: 0.8s;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.6);
+                opacity: 0.6;
+            }
+        }
+
+        /* Responsive mejorado */
+        @media (max-width: 768px) {
+            .greeting-card {
+                padding: 50px 35px;
+                min-width: auto;
+                width: 92vw;
+                border-radius: 30px;
+            }
+
+            .greeting-text {
+                font-size: 38px;
+            }
+
+            .icon-container {
+                font-size: 80px;
+            }
+
+            .message {
+                font-size: 18px;
+            }
+
+            .time-display {
+                font-size: 24px;
+                padding: 12px 20px;
+                letter-spacing: 2px;
+            }
+
+            .decorative-image {
+                width: 70px !important;
+                opacity: 0.5;
+            }
+
+            .card-image {
+                width: 50px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .decorative-image {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Partículas de fondo -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Imágenes decorativas alrededor -->
+    <div class="image-decoration">
+        <img src="image/hello.gif" alt="Hello" class="decorative-image top-left">
+        <img src="image/dias.gif" alt="Días" class="decorative-image top-right">
+        <img src="image/as.gif" alt="Decoración" class="decorative-image bottom-left">
+        <img src="image/jh.gif" alt="Decoración" class="decorative-image bottom-right">
+        <img src="image/unnamed.gif" alt="Decoración" class="decorative-image mid-left">
+        <img src="image/asd.gif" alt="Decoración" class="decorative-image mid-right">
+    </div>
+
+    <!-- Tarjeta de saludo -->
+    <div class="card-container">
+        <div class="greeting-card">
+            <div class="card-shine"></div>
+            
+            <!-- Imágenes dentro de la tarjeta -->
+            <div class="card-images">
+                <img src="image/ax.gif" alt="Decoración" class="card-image img-1">
+                <img src="image/qw.gif" alt="Decoración" class="card-image img-2">
+                <img src="image/as.gif" alt="Decoración" class="card-image img-3">
+                <img src="image/hello.gif" alt="Decoración" class="card-image img-4">
+            </div>
+            
+            <div class="icon-container" id="icon">
+                🌅
+            </div>
+            
+            <h1 class="greeting-text" id="greeting">
+                Buenos Días
+            </h1>
+            
+            <p class="message" id="message">
+                Que tengas un día maravilloso lleno de energía y éxito
+            </p>
+            
+            <div class="time-display" id="time">
+                00:00:00
+            </div>
+            
+            <div class="decoration">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de imágenes según la hora del día
+        const imageConfig = {
+            morning: {
+                outer: ['image/hello.gif', 'image/dias.gif', 'image/as.gif', 'image/jh.gif', 'image/unnamed.gif', 'image/asd.gif'],
+                inner: ['image/ax.gif', 'image/qw.gif', 'image/as.gif', 'image/hello.gif']
+            },
+            afternoon: {
+                outer: ['image/hello.gif', 'image/dias.gif', 'image/asd.gif', 'image/qw.gif', 'image/ax.gif', 'image/jh.gif'],
+                inner: ['image/qw.gif', 'image/ax.gif', 'image/hello.gif', 'image/dias.gif']
+            },
+            night: {
+                outer: ['image/unnamed.gif', 'image/jh.gif', 'image/as.gif', 'image/asd.gif', 'image/hello.gif', 'image/dias.gif'],
+                inner: ['image/as.gif', 'image/unnamed.gif', 'image/jh.gif', 'image/asd.gif']
+            }
+        };
+
+        // Función para crear partículas mejoradas
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 40;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                const size = Math.random() * 6 + 3;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDuration = (Math.random() * 12 + 12) + 's';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Función para actualizar imágenes según la hora
+        function updateImages(period) {
+            const config = imageConfig[period];
+            const outerImages = document.querySelectorAll('.decorative-image');
+            const innerImages = document.querySelectorAll('.card-image');
+
+            // Actualizar imágenes exteriores
+            outerImages.forEach((img, index) => {
+                if (config.outer[index]) {
+                    img.src = config.outer[index];
+                    img.style.animationDelay = (index * 1.5) + 's';
+                }
+            });
+
+            // Actualizar imágenes interiores
+            innerImages.forEach((img, index) => {
+                if (config.inner[index]) {
+                    img.src = config.inner[index];
+                    img.style.animationDelay = (index * 2) + 's';
+                }
+            });
+        }
+
+        // Función para actualizar el saludo según la hora
+        function updateGreeting() {
+            const now = new Date();
+            const hour = now.getHours();
+            const greetingElement = document.getElementById('greeting');
+            const messageElement = document.getElementById('message');
+            const iconElement = document.getElementById('icon');
+            const body = document.body;
+
+            // Limpiar clases anteriores
+            body.classList.remove('morning', 'afternoon', 'night');
+
+            let period = 'morning';
+
+            if (hour >= 6 && hour < 12) {
+                // Buenos días (6:00 - 11:59)
+                greetingElement.textContent = '¡Buenos Días Familia!';
+                messageElement.textContent = 'Que tengan un día maravilloso lleno de energía y éxito';
+                iconElement.textContent = '🌅';
+                body.classList.add('morning');
+                period = 'morning';
+            } else if (hour >= 12 && hour < 20) {
+                // Buenas tardes (12:00 - 19:59)
+                greetingElement.textContent = '¡Buenas Tardes Familia!';
+                messageElement.textContent = 'Que su tarde esté llena de momentos especiales y productividad';
+                iconElement.textContent = '☀️';
+                body.classList.add('afternoon');
+                period = 'afternoon';
+            } else {
+                // Buenas noches (20:00 - 5:59)
+                greetingElement.textContent = '¡Buenas Noches Familia!';
+                messageElement.textContent = 'Que tengan una noche tranquila y un merecido descanso';
+                iconElement.textContent = '🌙';
+                body.classList.add('night');
+                period = 'night';
+            }
+
+            // Actualizar imágenes según el período
+            updateImages(period);
+        }
+
+        // Función para actualizar el reloj
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('time').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        // Función para agregar efecto parallax a las imágenes
+        function initParallax() {
+            document.addEventListener('mousemove', (e) => {
+                const mouseX = e.clientX / window.innerWidth;
+                const mouseY = e.clientY / window.innerHeight;
+                
+                const images = document.querySelectorAll('.decorative-image');
+                images.forEach((img, index) => {
+                    const speed = (index + 1) * 0.5;
+                    const x = (mouseX - 0.5) * speed * 20;
+                    const y = (mouseY - 0.5) * speed * 20;
+                    img.style.transform = `translate(${x}px, ${y}px)`;
+                });
+            });
+        }
+
+        // Inicializar
+        createParticles();
+        updateGreeting();
+        updateClock();
+        initParallax();
+
+        // Actualizar reloj cada segundo
+        setInterval(updateClock, 1000);
+
+        // Verificar cambio de período cada minuto
+        setInterval(updateGreeting, 60000);
+
+        // Pre-cargar todas las imágenes para mejor rendimiento
+        window.addEventListener('load', () => {
+            const allImages = [
+                'image/hello.gif', 'image/dias.gif', 'image/as.gif', 
+                'image/jh.gif', 'image/unnamed.gif', 'image/asd.gif',
+                'image/ax.gif', 'image/qw.gif'
+            ];
+            
+            allImages.forEach(src => {
+                const img = new Image();
+                img.src = src;
+            });
+        });
+    </script>
+</body>
+</html>
