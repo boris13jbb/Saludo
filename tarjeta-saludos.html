@@ -296,6 +296,230 @@
             filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.2));
             position: relative;
             z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon-container img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: bounce 2.5s ease-in-out infinite;
+        }
+
+        /* Input para cargar imagen */
+        .image-upload-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .image-upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .image-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .image-upload-btn:active {
+            transform: translateY(0);
+        }
+
+        .image-upload-input {
+            display: none;
+        }
+
+        .remove-image-btn {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(245, 87, 108, 0.4);
+            font-family: 'Poppins', sans-serif;
+            margin-top: 5px;
+        }
+
+        .remove-image-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.6);
+        }
+
+        body.afternoon .image-upload-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        body.night .image-upload-btn {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        /* Modal de administrador */
+        .admin-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .admin-modal.active {
+            display: flex;
+        }
+
+        .admin-modal-content {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: cardEntrance 0.5s ease;
+        }
+
+        .admin-modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .admin-modal-content input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .admin-modal-content input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .admin-modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .admin-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .admin-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .admin-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .admin-btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .admin-btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .admin-error {
+            color: #f5576c;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .admin-error.show {
+            display: block;
+        }
+
+        /* Botón de acceso admin (solo visible cuando no es admin) */
+        .admin-access-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 999;
+            display: none;
+        }
+
+        .admin-access-btn:hover {
+            background: rgba(102, 126, 234, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .admin-access-btn.show {
+            display: block;
+        }
+
+        /* Ocultar controles cuando no es admin */
+        .admin-only {
+            display: none;
+        }
+
+        .admin-only.show {
+            display: block;
+        }
+
+        .image-upload-wrapper.admin-only {
+            display: none;
+        }
+
+        .image-upload-wrapper.admin-only.show {
+            display: inline-block;
         }
 
         @keyframes bounce {
@@ -445,6 +669,21 @@
                 font-size: 80px;
             }
 
+            .icon-container img {
+                width: 120px;
+                height: 120px;
+            }
+
+            .image-upload-btn {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+
+            .remove-image-btn {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+
             .message {
                 font-size: 18px;
             }
@@ -500,7 +739,13 @@
             </div>
             
             <div class="icon-container" id="icon">
-                🌅
+                <span id="icon-emoji">🌅</span>
+                <img id="icon-image" style="display: none;" alt="Imagen personalizada">
+                <div class="image-upload-wrapper admin-only" id="image-upload-wrapper">
+                    <input type="file" id="image-upload" class="image-upload-input" accept="image/*">
+                    <label for="image-upload" class="image-upload-btn">📷 Cargar Imagen</label>
+                    <button id="remove-image" class="remove-image-btn" style="display: none;">✖️ Quitar Imagen</button>
+                </div>
             </div>
             
             <h1 class="greeting-text" id="greeting">
@@ -523,7 +768,70 @@
         </div>
     </div>
 
+    <!-- Botón de acceso admin -->
+    <button class="admin-access-btn" id="admin-access-btn">🔐 Admin</button>
+
+    <!-- Modal de administrador -->
+    <div class="admin-modal" id="admin-modal">
+        <div class="admin-modal-content">
+            <h2>Acceso de Administrador</h2>
+            <input type="password" id="admin-password" placeholder="Ingrese la contraseña" autocomplete="off">
+            <div class="admin-error" id="admin-error">Contraseña incorrecta</div>
+            <div class="admin-modal-buttons">
+                <button class="admin-btn admin-btn-primary" id="admin-login-btn">Iniciar Sesión</button>
+                <button class="admin-btn admin-btn-secondary" id="admin-cancel-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Configuración de administrador
+        const ADMIN_PASSWORD = 'admin123'; // Cambia esta contraseña por la que desees
+        const ADMIN_IMAGE_KEY = 'adminIconImage';
+        const ADMIN_SESSION_KEY = 'isAdmin';
+
+        // Verificar si es administrador
+        function isAdmin() {
+            return localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+        }
+
+        // Establecer estado de administrador
+        function setAdminStatus(isAdmin) {
+            if (isAdmin) {
+                localStorage.setItem(ADMIN_SESSION_KEY, 'true');
+            } else {
+                localStorage.removeItem(ADMIN_SESSION_KEY);
+            }
+            updateAdminUI();
+        }
+
+        // Actualizar interfaz según estado de admin
+        function updateAdminUI() {
+            const isAdminUser = isAdmin();
+            const uploadWrapper = document.getElementById('image-upload-wrapper');
+            const adminAccessBtn = document.getElementById('admin-access-btn');
+
+            if (isAdminUser) {
+                // Mostrar controles de administrador
+                if (uploadWrapper) {
+                    uploadWrapper.classList.add('show');
+                }
+                // Ocultar botón de acceso
+                if (adminAccessBtn) {
+                    adminAccessBtn.classList.remove('show');
+                }
+            } else {
+                // Ocultar controles de administrador
+                if (uploadWrapper) {
+                    uploadWrapper.classList.remove('show');
+                }
+                // Mostrar botón de acceso
+                if (adminAccessBtn) {
+                    adminAccessBtn.classList.add('show');
+                }
+            }
+        }
+
         // Configuración de imágenes según la hora del día
         const imageConfig = {
             morning: {
@@ -589,39 +897,220 @@
             const hour = now.getHours();
             const greetingElement = document.getElementById('greeting');
             const messageElement = document.getElementById('message');
-            const iconElement = document.getElementById('icon');
+            const iconEmojiElement = document.getElementById('icon-emoji');
             const body = document.body;
 
             // Limpiar clases anteriores
             body.classList.remove('morning', 'afternoon', 'night');
 
             let period = 'morning';
+            let emoji = '🌅';
 
             if (hour >= 6 && hour < 12) {
                 // Buenos días (6:00 - 11:59)
                 greetingElement.textContent = '¡Buenos Días Familia!';
                 messageElement.textContent = 'Que tengan un día maravilloso lleno de energía y éxito';
-                iconElement.textContent = '🌅';
+                emoji = '🌅';
                 body.classList.add('morning');
                 period = 'morning';
             } else if (hour >= 12 && hour < 20) {
                 // Buenas tardes (12:00 - 19:59)
                 greetingElement.textContent = '¡Buenas Tardes Familia!';
                 messageElement.textContent = 'Que su tarde esté llena de momentos especiales y productividad';
-                iconElement.textContent = '☀️';
+                emoji = '☀️';
                 body.classList.add('afternoon');
                 period = 'afternoon';
             } else {
                 // Buenas noches (20:00 - 5:59)
                 greetingElement.textContent = '¡Buenas Noches Familia!';
                 messageElement.textContent = 'Que tengan una noche tranquila y un merecido descanso';
-                iconElement.textContent = '🌙';
+                emoji = '🌙';
                 body.classList.add('night');
                 period = 'night';
             }
 
+            // Solo actualizar el emoji si no hay imagen del administrador cargada
+            const iconImage = document.getElementById('icon-image');
+            if (iconImage && iconImage.style.display === 'none') {
+                iconEmojiElement.textContent = emoji;
+            }
+
             // Actualizar imágenes según el período
             updateImages(period);
+        }
+
+        // Función para cargar imagen del administrador (visible para todos)
+        function loadAdminImage() {
+            const savedImage = localStorage.getItem(ADMIN_IMAGE_KEY);
+            if (savedImage) {
+                const iconImage = document.getElementById('icon-image');
+                const iconEmoji = document.getElementById('icon-emoji');
+                const removeBtn = document.getElementById('remove-image');
+                
+                iconImage.src = savedImage;
+                iconImage.style.display = 'block';
+                iconEmoji.style.display = 'none';
+                
+                // Solo mostrar botón de quitar si es admin
+                if (isAdmin() && removeBtn) {
+                    removeBtn.style.display = 'block';
+                } else if (removeBtn) {
+                    removeBtn.style.display = 'none';
+                }
+            }
+        }
+
+        // Función para guardar imagen del administrador
+        function saveAdminImage(imageSrc) {
+            localStorage.setItem(ADMIN_IMAGE_KEY, imageSrc);
+        }
+
+        // Función para eliminar imagen del administrador (solo admin puede hacerlo)
+        function removeAdminImage() {
+            if (!isAdmin()) return;
+            
+            const iconImage = document.getElementById('icon-image');
+            const iconEmoji = document.getElementById('icon-emoji');
+            const removeBtn = document.getElementById('remove-image');
+            
+            iconImage.style.display = 'none';
+            iconImage.src = '';
+            iconEmoji.style.display = 'block';
+            if (removeBtn) {
+                removeBtn.style.display = 'none';
+            }
+            
+            localStorage.removeItem(ADMIN_IMAGE_KEY);
+            
+            // Actualizar el emoji según la hora actual
+            updateGreeting();
+        }
+
+        // Manejar carga de imagen (solo para administrador)
+        function setupImageUpload() {
+            const imageUpload = document.getElementById('image-upload');
+            const iconImage = document.getElementById('icon-image');
+            const iconEmoji = document.getElementById('icon-emoji');
+            const removeBtn = document.getElementById('remove-image');
+
+            if (!imageUpload) return;
+
+            imageUpload.addEventListener('change', function(e) {
+                if (!isAdmin()) return;
+                
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const imageSrc = event.target.result;
+                        iconImage.src = imageSrc;
+                        iconImage.style.display = 'block';
+                        iconEmoji.style.display = 'none';
+                        if (removeBtn) {
+                            removeBtn.style.display = 'block';
+                        }
+                        
+                        // Guardar imagen del administrador
+                        saveAdminImage(imageSrc);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', removeAdminImage);
+            }
+        }
+
+        // Manejar login de administrador
+        function setupAdminLogin() {
+            const adminModal = document.getElementById('admin-modal');
+            const adminAccessBtn = document.getElementById('admin-access-btn');
+            const adminLoginBtn = document.getElementById('admin-login-btn');
+            const adminCancelBtn = document.getElementById('admin-cancel-btn');
+            const adminPasswordInput = document.getElementById('admin-password');
+            const adminError = document.getElementById('admin-error');
+
+            // Abrir modal
+            if (adminAccessBtn) {
+                adminAccessBtn.addEventListener('click', function() {
+                    if (adminModal) {
+                        adminModal.classList.add('active');
+                        if (adminPasswordInput) {
+                            adminPasswordInput.focus();
+                        }
+                    }
+                });
+            }
+
+            // Cerrar modal
+            if (adminCancelBtn) {
+                adminCancelBtn.addEventListener('click', function() {
+                    if (adminModal) {
+                        adminModal.classList.remove('active');
+                    }
+                    if (adminPasswordInput) {
+                        adminPasswordInput.value = '';
+                    }
+                    if (adminError) {
+                        adminError.classList.remove('show');
+                    }
+                });
+            }
+
+            // Login
+            if (adminLoginBtn) {
+                adminLoginBtn.addEventListener('click', function() {
+                    const password = adminPasswordInput ? adminPasswordInput.value : '';
+                    
+                    if (password === ADMIN_PASSWORD) {
+                        setAdminStatus(true);
+                        if (adminModal) {
+                            adminModal.classList.remove('active');
+                        }
+                        if (adminPasswordInput) {
+                            adminPasswordInput.value = '';
+                        }
+                        if (adminError) {
+                            adminError.classList.remove('show');
+                        }
+                    } else {
+                        if (adminError) {
+                            adminError.classList.add('show');
+                        }
+                        if (adminPasswordInput) {
+                            adminPasswordInput.value = '';
+                            adminPasswordInput.focus();
+                        }
+                    }
+                });
+            }
+
+            // Login con Enter
+            if (adminPasswordInput) {
+                adminPasswordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        if (adminLoginBtn) {
+                            adminLoginBtn.click();
+                        }
+                    }
+                });
+            }
+
+            // Cerrar modal al hacer clic fuera
+            if (adminModal) {
+                adminModal.addEventListener('click', function(e) {
+                    if (e.target === adminModal) {
+                        adminModal.classList.remove('active');
+                        if (adminPasswordInput) {
+                            adminPasswordInput.value = '';
+                        }
+                        if (adminError) {
+                            adminError.classList.remove('show');
+                        }
+                    }
+                });
+            }
         }
 
         // Función para actualizar el reloj
@@ -652,6 +1141,10 @@
 
         // Inicializar
         createParticles();
+        setupAdminLogin();
+        updateAdminUI(); // Actualizar UI según estado de admin
+        setupImageUpload();
+        loadAdminImage(); // Cargar imagen del administrador (visible para todos)
         updateGreeting();
         updateClock();
         initParallax();
