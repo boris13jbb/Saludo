@@ -1383,13 +1383,25 @@
                 const imagePath = `${basePath}image/${ADMIN_ICON_FILENAME}.${ext}`;
                 try {
                     const img = new Image();
-                    await new Promise((resolve, reject) => {
-                        img.onload = resolve;
-                        img.onerror = reject;
+                    const imageFound = await new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => {
+                            reject(new Error('Timeout'));
+                        }, 3000); // Timeout de 3 segundos
+                        
+                        img.onload = () => {
+                            clearTimeout(timeout);
+                            resolve(true);
+                        };
+                        img.onerror = () => {
+                            clearTimeout(timeout);
+                            reject(new Error('Image not found'));
+                        };
                         img.src = imagePath;
                     });
-                    // Si la imagen se carga correctamente, retornar la ruta
-                    return imagePath;
+                    
+                    if (imageFound) {
+                        return imagePath;
+                    }
                 } catch (e) {
                     // Continuar con la siguiente extensión
                     continue;
@@ -1405,34 +1417,54 @@
             const removeBtn = document.getElementById('remove-image');
             const publishBtn = document.getElementById('publish-image');
             
+            if (!iconImage || !iconEmoji) return;
+            
             let imageToShow = null;
             let imageSource = null; // 'repo', 'published', 'temporary'
             
             // Prioridad 1: Buscar imagen en el repositorio (visible para todos)
-            const repoImage = await findAdminImageInRepo();
-            if (repoImage) {
-                imageToShow = repoImage;
-                imageSource = 'repo';
-            } else {
-                // Prioridad 2: Imagen publicada en localStorage
+            try {
+                const repoImage = await findAdminImageInRepo();
+                if (repoImage) {
+                    imageToShow = repoImage;
+                    imageSource = 'repo';
+                }
+            } catch (e) {
+                console.log('No se encontró imagen en el repositorio');
+            }
+            
+            // Si no hay imagen en el repo, buscar en localStorage
+            if (!imageToShow) {
+                // Prioridad 2: Imagen publicada en localStorage (para todos los usuarios)
                 const publishedImage = localStorage.getItem(ADMIN_IMAGE_PUBLISHED_KEY);
                 if (publishedImage) {
                     imageToShow = publishedImage;
                     imageSource = 'published';
                 } else {
-                    // Prioridad 3: Imagen temporal del admin
-                    const tempImage = localStorage.getItem(ADMIN_IMAGE_KEY);
-                    if (tempImage) {
-                        imageToShow = tempImage;
-                        imageSource = 'temporary';
+                    // Prioridad 3: Imagen temporal del admin (solo para admin)
+                    if (isAdmin()) {
+                        const tempImage = localStorage.getItem(ADMIN_IMAGE_KEY);
+                        if (tempImage) {
+                            imageToShow = tempImage;
+                            imageSource = 'temporary';
+                        }
                     }
                 }
             }
             
             if (imageToShow) {
+                // Asegurar que la imagen se carga correctamente
+                iconImage.onload = function() {
+                    iconImage.style.display = 'block';
+                    iconEmoji.style.display = 'none';
+                };
+                iconImage.onerror = function() {
+                    // Si falla la carga, intentar con la siguiente opción
+                    console.error('Error al cargar imagen:', imageToShow);
+                    iconImage.style.display = 'none';
+                    iconEmoji.style.display = 'block';
+                };
                 iconImage.src = imageToShow;
-                iconImage.style.display = 'block';
-                iconEmoji.style.display = 'none';
                 
                 // Mostrar botones según si es admin
                 if (isAdmin()) {
@@ -1444,7 +1476,7 @@
                         const hasTemporary = localStorage.getItem(ADMIN_IMAGE_KEY);
                         const hasPublished = localStorage.getItem(ADMIN_IMAGE_PUBLISHED_KEY);
                         // Mostrar si hay imagen temporal y no hay imagen en el repositorio
-                        publishBtn.style.display = (hasTemporary && !repoImage) ? 'block' : 'none';
+                        publishBtn.style.display = (hasTemporary && imageSource !== 'repo') ? 'block' : 'none';
                     }
                 } else {
                     if (removeBtn) {
@@ -1456,12 +1488,8 @@
                 }
             } else {
                 // No hay imagen, mostrar emoji
-                if (iconImage) {
-                    iconImage.style.display = 'none';
-                }
-                if (iconEmoji) {
-                    iconEmoji.style.display = 'block';
-                }
+                iconImage.style.display = 'none';
+                iconEmoji.style.display = 'block';
                 if (removeBtn) {
                     removeBtn.style.display = 'none';
                 }
@@ -1515,11 +1543,13 @@
                 // Descargar la imagen para que el admin la suba al repositorio
                 downloadImageAsFile(savedImage, `${ADMIN_ICON_FILENAME}.${extension}`);
                 
-                // Actualizar la visualización
-                loadAdminImage();
-                
-                // Mostrar instrucciones
-                alert(`✅ Imagen publicada exitosamente!\n\n📥 Se ha descargado el archivo: ${ADMIN_ICON_FILENAME}.${extension}\n\n📋 INSTRUCCIONES:\n1. Sube el archivo descargado a la carpeta "image/" de tu repositorio\n2. Asegúrate de que el nombre sea exactamente: ${ADMIN_ICON_FILENAME}.${extension}\n3. Haz commit y push a GitHub\n4. Todos los usuarios verán la imagen automáticamente\n\n💡 Mientras tanto, la imagen se guardará en localStorage para usuarios que ya visitaron el sitio.`);
+                // Actualizar la visualización inmediatamente
+                loadAdminImage().then(() => {
+                    // Mostrar instrucciones después de cargar
+                    setTimeout(() => {
+                        alert(`✅ Imagen publicada exitosamente!\n\n📥 Se ha descargado el archivo: ${ADMIN_ICON_FILENAME}.${extension}\n\n📋 INSTRUCCIONES IMPORTANTES:\n1. Sube el archivo descargado a la carpeta "image/" de tu repositorio\n2. El nombre DEBE ser exactamente: ${ADMIN_ICON_FILENAME}.${extension}\n3. Haz commit y push a GitHub\n4. Espera unos minutos para que GitHub Pages actualice\n5. Todos los usuarios verán la imagen automáticamente\n\n⚠️ NOTA: Sin subirla al repositorio, solo usuarios que ya visitaron el sitio la verán.`);
+                    }, 500);
+                });
             } else {
                 alert('⚠️ No hay imagen para publicar. Por favor, carga una imagen primero.');
             }
@@ -1729,13 +1759,31 @@
         setupAdminLogin();
         updateAdminUI(); // Actualizar UI según estado de admin
         setupImageUpload();
-        // Cargar imagen del administrador (async - visible para todos)
-        loadAdminImage().then(() => {
-            // La imagen se carga automáticamente
-        });
         updateGreeting();
         updateClock();
         initParallax();
+        
+        // Cargar imagen del administrador después de que todo esté listo
+        // Esto asegura que todos los elementos estén disponibles
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAdminImage().catch(err => {
+                console.log('Cargando imagen del administrador...');
+            });
+        });
+        
+        // También intentar cargar después de un breve delay para asegurar que todo esté renderizado
+        setTimeout(() => {
+            loadAdminImage().catch(err => {
+                console.log('Reintentando cargar imagen...');
+            });
+        }, 500);
+        
+        // Cargar inmediatamente si el DOM ya está listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadAdminImage);
+        } else {
+            loadAdminImage();
+        }
 
         // Actualizar reloj cada segundo
         setInterval(updateClock, 1000);
