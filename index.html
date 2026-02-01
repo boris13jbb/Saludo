@@ -1210,7 +1210,7 @@
             <p style="font-size: 14px; color: #666; margin-bottom: 20px; text-align: left;">
                 Para habilitar la actualización automática de imágenes, necesitas un <strong>GitHub Personal Access Token</strong>.
             </p>
-            <input type="text" id="github-token-input" placeholder="GitHub Personal Access Token" autocomplete="off" style="margin-bottom: 10px;">
+            <input type="password" id="github-token-input" placeholder="GitHub Personal Access Token (se guarda de forma segura)" autocomplete="off" style="margin-bottom: 10px;">
             <input type="text" id="github-repo-input" placeholder="Repositorio (usuario/repo)" value="boris13jbb/Saludo" style="margin-bottom: 10px;">
             <input type="text" id="github-branch-input" placeholder="Rama (main o master)" value="main" style="margin-bottom: 20px;">
             <div class="admin-error" id="github-error" style="display: none;">Error en la configuración</div>
@@ -1222,7 +1222,8 @@
                 💡 Cómo obtener un token:<br>
                 1. Ve a GitHub.com → Settings → Developer settings → Personal access tokens → Tokens (classic)<br>
                 2. Genera un nuevo token con permisos <strong>repo</strong><br>
-                3. Copia y pega el token aquí
+                3. Copia y pega el token aquí<br><br>
+                🔒 <strong>Seguridad:</strong> El token se guarda solo en tu navegador (localStorage) y nunca se expone en el código fuente. Si ya tienes un token configurado, déjalo vacío para mantener el actual.
             </p>
         </div>
     </div>
@@ -1237,10 +1238,11 @@
         const ADMIN_ICON_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']; // Extensiones permitidas
         
         // Configuración de GitHub (para actualización automática)
-        // IMPORTANTE: Configura estos valores según tu repositorio
-        const GITHUB_CONFIG = {
-            enabled: false, // Cambia a true para habilitar actualización automática
-            token: '', // Tu GitHub Personal Access Token (se guarda en localStorage)
+        // ⚠️ SEGURIDAD: El token NUNCA debe estar en el código fuente
+        // Se configura únicamente a través de la interfaz y se guarda en localStorage
+        let GITHUB_CONFIG = {
+            enabled: false, // Se habilita automáticamente cuando hay token configurado
+            token: '', // GitHub Personal Access Token (solo en localStorage, nunca en código)
             repo: 'boris13jbb/Saludo', // Formato: usuario/repositorio
             branch: 'main', // Rama del repositorio (main o master)
             path: 'image', // Carpeta donde se guardará la imagen
@@ -1249,6 +1251,52 @@
         
         // Clave para guardar el token de GitHub de forma segura
         const GITHUB_TOKEN_KEY = 'githubToken';
+        const GITHUB_REPO_KEY = 'githubRepo';
+        const GITHUB_BRANCH_KEY = 'githubBranch';
+
+        // Cargar configuración de GitHub desde localStorage al iniciar
+        // ⚠️ SEGURIDAD: Solo carga desde localStorage, nunca desde el código
+        function loadGitHubConfig() {
+            const savedToken = localStorage.getItem(GITHUB_TOKEN_KEY);
+            const savedRepo = localStorage.getItem(GITHUB_REPO_KEY);
+            const savedBranch = localStorage.getItem(GITHUB_BRANCH_KEY);
+            
+            // Solo usar token de localStorage (nunca del código)
+            if (savedToken && savedToken.trim() !== '') {
+                GITHUB_CONFIG.token = savedToken;
+                GITHUB_CONFIG.enabled = true;
+            } else {
+                GITHUB_CONFIG.token = '';
+                GITHUB_CONFIG.enabled = false;
+            }
+            
+            if (savedRepo && savedRepo.trim() !== '') {
+                GITHUB_CONFIG.repo = savedRepo;
+            }
+            if (savedBranch && savedBranch.trim() !== '') {
+                GITHUB_CONFIG.branch = savedBranch;
+            }
+        }
+
+        // Guardar configuración de GitHub
+        function saveGitHubConfig(token, repo, branch) {
+            if (token) {
+                localStorage.setItem(GITHUB_TOKEN_KEY, token);
+                GITHUB_CONFIG.token = token;
+                GITHUB_CONFIG.enabled = true;
+            }
+            if (repo) {
+                localStorage.setItem(GITHUB_REPO_KEY, repo);
+                GITHUB_CONFIG.repo = repo;
+            }
+            if (branch) {
+                localStorage.setItem(GITHUB_BRANCH_KEY, branch);
+                GITHUB_CONFIG.branch = branch;
+            }
+        }
+
+        // Cargar configuración al iniciar
+        loadGitHubConfig();
 
         // Verificar si es administrador
         function isAdmin() {
@@ -1815,9 +1863,16 @@
             const githubBranchInput = document.getElementById('github-branch-input');
             const githubError = document.getElementById('github-error');
 
-            // Cargar valores guardados
+            // Cargar valores guardados (no mostrar el token completo por seguridad)
             if (githubTokenInput) {
-                githubTokenInput.value = localStorage.getItem(GITHUB_TOKEN_KEY) || '';
+                const savedToken = localStorage.getItem(GITHUB_TOKEN_KEY);
+                if (savedToken && savedToken.trim() !== '') {
+                    // Mostrar solo indicador de que hay token guardado
+                    githubTokenInput.placeholder = 'Token configurado (••••••••) - Ingresa uno nuevo para cambiarlo';
+                    githubTokenInput.value = '';
+                } else {
+                    githubTokenInput.value = '';
+                }
             }
             if (githubRepoInput) {
                 githubRepoInput.value = localStorage.getItem(GITHUB_REPO_KEY) || GITHUB_CONFIG.repo;
@@ -1833,18 +1888,67 @@
                     const repo = githubRepoInput ? githubRepoInput.value.trim() : '';
                     const branch = githubBranchInput ? githubBranchInput.value.trim() : '';
 
-                    if (token && repo && branch) {
-                        saveGitHubConfig(token, repo, branch);
-                        if (githubModal) {
-                            githubModal.classList.remove('active');
+                    // Validación de seguridad
+                    if (!token || token.length < 20) {
+                        // Si el campo está vacío pero hay token guardado, mantener el existente
+                        const savedToken = localStorage.getItem(GITHUB_TOKEN_KEY);
+                        if (!savedToken) {
+                            if (githubError) {
+                                githubError.textContent = 'El token de GitHub debe tener al menos 20 caracteres';
+                                githubError.style.display = 'block';
+                            }
+                            return;
                         }
-                        alert('✅ Configuración de GitHub guardada exitosamente!\n\nAhora las imágenes se subirán automáticamente cuando las publiques.');
+                        // Usar token guardado si no se ingresó uno nuevo
                     } else {
-                        if (githubError) {
-                            githubError.textContent = 'Por favor, completa todos los campos';
-                            githubError.style.display = 'block';
+                        // Validar formato del token (debe empezar con ghp_ o gho_ o ser un token clásico)
+                        if (!token.startsWith('ghp_') && !token.startsWith('gho_') && token.length < 40) {
+                            if (githubError) {
+                                githubError.textContent = 'El formato del token no es válido';
+                                githubError.style.display = 'block';
+                            }
+                            return;
                         }
                     }
+
+                    if (!repo || !repo.includes('/')) {
+                        if (githubError) {
+                            githubError.textContent = 'El repositorio debe tener el formato: usuario/repositorio';
+                            githubError.style.display = 'block';
+                        }
+                        return;
+                    }
+
+                    if (!branch || branch.trim() === '') {
+                        if (githubError) {
+                            githubError.textContent = 'Debes especificar una rama (main o master)';
+                            githubError.style.display = 'block';
+                        }
+                        return;
+                    }
+
+                    // Guardar configuración de forma segura
+                    const tokenToSave = token || localStorage.getItem(GITHUB_TOKEN_KEY);
+                    if (tokenToSave) {
+                        saveGitHubConfig(tokenToSave, repo, branch);
+                    } else {
+                        saveGitHubConfig('', repo, branch);
+                    }
+                    
+                    // Limpiar el campo del token por seguridad
+                    if (githubTokenInput) {
+                        githubTokenInput.value = '';
+                        githubTokenInput.placeholder = 'Token configurado (••••••••) - Ingresa uno nuevo para cambiarlo';
+                    }
+                    
+                    if (githubModal) {
+                        githubModal.classList.remove('active');
+                    }
+                    if (githubError) {
+                        githubError.style.display = 'none';
+                    }
+                    
+                    alert('✅ Configuración de GitHub guardada exitosamente!\n\n🔒 El token se guardó de forma segura en tu navegador (localStorage).\n\nAhora las imágenes se subirán automáticamente cuando las publiques.');
                 });
             }
 
