@@ -860,6 +860,8 @@
         const ADMIN_IMAGE_KEY = 'adminIconImage';
         const ADMIN_IMAGE_PUBLISHED_KEY = 'adminIconImagePublished'; // Imagen publicada (persistente)
         const ADMIN_SESSION_KEY = 'isAdmin';
+        const ADMIN_ICON_FILENAME = 'admin-icon'; // Nombre del archivo en el repositorio (sin extensión)
+        const ADMIN_ICON_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']; // Extensiones permitidas
 
         // Verificar si es administrador
         function isAdmin() {
@@ -891,7 +893,7 @@
                 if (adminAccessBtn) {
                     adminAccessBtn.classList.remove('show');
                 }
-                // Recargar imagen para actualizar botones
+                // Recargar imagen para actualizar botones (async)
                 loadAdminImage();
             } else {
                 // Ocultar controles de administrador
@@ -1024,23 +1026,63 @@
             updateImages(period);
         }
 
-        // Función para cargar imagen del administrador (visible para todos)
-        function loadAdminImage() {
-            // Priorizar imagen publicada (persistente para todos)
-            let savedImage = localStorage.getItem(ADMIN_IMAGE_PUBLISHED_KEY);
+        // Función para buscar imagen del administrador en el repositorio
+        async function findAdminImageInRepo() {
+            const basePath = getBasePath();
             
-            // Si no hay imagen publicada, usar la imagen temporal del admin
-            if (!savedImage) {
-                savedImage = localStorage.getItem(ADMIN_IMAGE_KEY);
+            // Intentar cargar cada extensión hasta encontrar una que exista
+            for (const ext of ADMIN_ICON_EXTENSIONS) {
+                const imagePath = `${basePath}image/${ADMIN_ICON_FILENAME}.${ext}`;
+                try {
+                    const img = new Image();
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                        img.src = imagePath;
+                    });
+                    // Si la imagen se carga correctamente, retornar la ruta
+                    return imagePath;
+                } catch (e) {
+                    // Continuar con la siguiente extensión
+                    continue;
+                }
+            }
+            return null;
+        }
+
+        // Función para cargar imagen del administrador (visible para todos)
+        async function loadAdminImage() {
+            const iconImage = document.getElementById('icon-image');
+            const iconEmoji = document.getElementById('icon-emoji');
+            const removeBtn = document.getElementById('remove-image');
+            const publishBtn = document.getElementById('publish-image');
+            
+            let imageToShow = null;
+            let imageSource = null; // 'repo', 'published', 'temporary'
+            
+            // Prioridad 1: Buscar imagen en el repositorio (visible para todos)
+            const repoImage = await findAdminImageInRepo();
+            if (repoImage) {
+                imageToShow = repoImage;
+                imageSource = 'repo';
+            } else {
+                // Prioridad 2: Imagen publicada en localStorage
+                const publishedImage = localStorage.getItem(ADMIN_IMAGE_PUBLISHED_KEY);
+                if (publishedImage) {
+                    imageToShow = publishedImage;
+                    imageSource = 'published';
+                } else {
+                    // Prioridad 3: Imagen temporal del admin
+                    const tempImage = localStorage.getItem(ADMIN_IMAGE_KEY);
+                    if (tempImage) {
+                        imageToShow = tempImage;
+                        imageSource = 'temporary';
+                    }
+                }
             }
             
-            if (savedImage) {
-                const iconImage = document.getElementById('icon-image');
-                const iconEmoji = document.getElementById('icon-emoji');
-                const removeBtn = document.getElementById('remove-image');
-                const publishBtn = document.getElementById('publish-image');
-                
-                iconImage.src = savedImage;
+            if (imageToShow) {
+                iconImage.src = imageToShow;
                 iconImage.style.display = 'block';
                 iconEmoji.style.display = 'none';
                 
@@ -1049,12 +1091,12 @@
                     if (removeBtn) {
                         removeBtn.style.display = 'block';
                     }
-                    // Mostrar botón de publicar solo si hay imagen temporal no publicada
+                    // Mostrar botón de publicar solo si hay imagen temporal y no hay imagen en repo
                     if (publishBtn) {
-                        const hasPublished = localStorage.getItem(ADMIN_IMAGE_PUBLISHED_KEY);
                         const hasTemporary = localStorage.getItem(ADMIN_IMAGE_KEY);
-                        publishBtn.style.display = (hasTemporary && !hasPublished) || 
-                                                   (hasTemporary && hasTemporary !== hasPublished) ? 'block' : 'none';
+                        const hasPublished = localStorage.getItem(ADMIN_IMAGE_PUBLISHED_KEY);
+                        // Mostrar si hay imagen temporal y no hay imagen en el repositorio
+                        publishBtn.style.display = (hasTemporary && !repoImage) ? 'block' : 'none';
                     }
                 } else {
                     if (removeBtn) {
@@ -1064,6 +1106,20 @@
                         publishBtn.style.display = 'none';
                     }
                 }
+            } else {
+                // No hay imagen, mostrar emoji
+                if (iconImage) {
+                    iconImage.style.display = 'none';
+                }
+                if (iconEmoji) {
+                    iconEmoji.style.display = 'block';
+                }
+                if (removeBtn) {
+                    removeBtn.style.display = 'none';
+                }
+                if (publishBtn) {
+                    publishBtn.style.display = 'none';
+                }
             }
         }
 
@@ -1072,20 +1128,50 @@
             localStorage.setItem(ADMIN_IMAGE_KEY, imageSrc);
         }
 
+        // Función para descargar imagen como archivo
+        function downloadImageAsFile(imageSrc, filename) {
+            // Convertir base64 a blob
+            const byteString = atob(imageSrc.split(',')[1]);
+            const mimeString = imageSrc.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            const blob = new Blob([ab], { type: mimeString });
+            
+            // Crear enlace de descarga
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
         // Función para publicar imagen (hacerla persistente para todos)
         function publishAdminImage() {
             if (!isAdmin()) return;
             
             const savedImage = localStorage.getItem(ADMIN_IMAGE_KEY);
             if (savedImage) {
-                // Guardar como imagen publicada (persistente)
+                // Guardar como imagen publicada (persistente en localStorage)
                 localStorage.setItem(ADMIN_IMAGE_PUBLISHED_KEY, savedImage);
+                
+                // Detectar extensión de la imagen
+                const mimeMatch = savedImage.match(/data:image\/([^;]+)/);
+                const extension = mimeMatch ? mimeMatch[1] : 'png';
+                
+                // Descargar la imagen para que el admin la suba al repositorio
+                downloadImageAsFile(savedImage, `${ADMIN_ICON_FILENAME}.${extension}`);
                 
                 // Actualizar la visualización
                 loadAdminImage();
                 
-                // Mostrar confirmación
-                alert('✅ Imagen publicada exitosamente. Ahora todos los usuarios verán esta imagen.');
+                // Mostrar instrucciones
+                alert(`✅ Imagen publicada exitosamente!\n\n📥 Se ha descargado el archivo: ${ADMIN_ICON_FILENAME}.${extension}\n\n📋 INSTRUCCIONES:\n1. Sube el archivo descargado a la carpeta "image/" de tu repositorio\n2. Asegúrate de que el nombre sea exactamente: ${ADMIN_ICON_FILENAME}.${extension}\n3. Haz commit y push a GitHub\n4. Todos los usuarios verán la imagen automáticamente\n\n💡 Mientras tanto, la imagen se guardará en localStorage para usuarios que ya visitaron el sitio.`);
             } else {
                 alert('⚠️ No hay imagen para publicar. Por favor, carga una imagen primero.');
             }
@@ -1095,14 +1181,22 @@
         function removeAdminImage() {
             if (!isAdmin()) return;
             
+            const confirmDelete = confirm('¿Estás seguro de que quieres eliminar la imagen?\n\nEsto eliminará:\n- La imagen temporal\n- La imagen publicada en localStorage\n\n⚠️ NOTA: Si subiste la imagen al repositorio, deberás eliminarla manualmente de la carpeta "image/"');
+            
+            if (!confirmDelete) return;
+            
             const iconImage = document.getElementById('icon-image');
             const iconEmoji = document.getElementById('icon-emoji');
             const removeBtn = document.getElementById('remove-image');
             const publishBtn = document.getElementById('publish-image');
             
-            iconImage.style.display = 'none';
-            iconImage.src = '';
-            iconEmoji.style.display = 'block';
+            if (iconImage) {
+                iconImage.style.display = 'none';
+                iconImage.src = '';
+            }
+            if (iconEmoji) {
+                iconEmoji.style.display = 'block';
+            }
             if (removeBtn) {
                 removeBtn.style.display = 'none';
             }
@@ -1113,6 +1207,9 @@
             // Eliminar tanto la imagen temporal como la publicada
             localStorage.removeItem(ADMIN_IMAGE_KEY);
             localStorage.removeItem(ADMIN_IMAGE_PUBLISHED_KEY);
+            
+            // Recargar para verificar si hay imagen en el repositorio
+            loadAdminImage();
             
             // Actualizar el emoji según la hora actual
             updateGreeting();
@@ -1284,7 +1381,10 @@
         setupAdminLogin();
         updateAdminUI(); // Actualizar UI según estado de admin
         setupImageUpload();
-        loadAdminImage(); // Cargar imagen del administrador (visible para todos)
+        // Cargar imagen del administrador (async - visible para todos)
+        loadAdminImage().then(() => {
+            // La imagen se carga automáticamente
+        });
         updateGreeting();
         updateClock();
         initParallax();
