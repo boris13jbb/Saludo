@@ -755,12 +755,12 @@
 
     <!-- Imágenes decorativas alrededor -->
     <div class="image-decoration">
-        <img src="image/hello.gif" alt="Hello" class="decorative-image top-left">
-        <img src="image/dias.gif" alt="Días" class="decorative-image top-right">
-        <img src="image/as.gif" alt="Decoración" class="decorative-image bottom-left">
-        <img src="image/jh.gif" alt="Decoración" class="decorative-image bottom-right">
-        <img src="image/unnamed.gif" alt="Decoración" class="decorative-image mid-left">
-        <img src="image/asd.gif" alt="Decoración" class="decorative-image mid-right">
+        <img src="./image/hello.gif" alt="Hello" class="decorative-image top-left">
+        <img src="./image/dias.gif" alt="Días" class="decorative-image top-right">
+        <img src="./image/as.gif" alt="Decoración" class="decorative-image bottom-left">
+        <img src="./image/jh.gif" alt="Decoración" class="decorative-image bottom-right">
+        <img src="./image/unnamed.gif" alt="Decoración" class="decorative-image mid-left">
+        <img src="./image/asd.gif" alt="Decoración" class="decorative-image mid-right">
     </div>
 
     <!-- Tarjeta de saludo -->
@@ -770,10 +770,10 @@
             
             <!-- Imágenes dentro de la tarjeta -->
             <div class="card-images">
-                <img src="image/ax.gif" alt="Decoración" class="card-image img-1">
-                <img src="image/qw.gif" alt="Decoración" class="card-image img-2">
-                <img src="image/as.gif" alt="Decoración" class="card-image img-3">
-                <img src="image/hello.gif" alt="Decoración" class="card-image img-4">
+                <img src="./image/ax.gif" alt="Decoración" class="card-image img-1">
+                <img src="./image/qw.gif" alt="Decoración" class="card-image img-2">
+                <img src="./image/as.gif" alt="Decoración" class="card-image img-3">
+                <img src="./image/hello.gif" alt="Decoración" class="card-image img-4">
             </div>
             
             <div class="icon-container" id="icon">
@@ -874,19 +874,31 @@
             }
         }
 
+        // Función para obtener la ruta base correcta
+        function getBasePath() {
+            const path = window.location.pathname;
+            // Si estamos en GitHub Pages con subdirectorio
+            if (path.includes('/Saludo/')) {
+                return './';
+            }
+            // Si estamos en la raíz
+            return './';
+        }
+
         // Configuración de imágenes según la hora del día
+        const basePath = getBasePath();
         const imageConfig = {
             morning: {
-                outer: ['image/hello.gif', 'image/dias.gif', 'image/as.gif', 'image/jh.gif', 'image/unnamed.gif', 'image/asd.gif'],
-                inner: ['image/ax.gif', 'image/qw.gif', 'image/as.gif', 'image/hello.gif']
+                outer: [`${basePath}image/hello.gif`, `${basePath}image/dias.gif`, `${basePath}image/as.gif`, `${basePath}image/jh.gif`, `${basePath}image/unnamed.gif`, `${basePath}image/asd.gif`],
+                inner: [`${basePath}image/ax.gif`, `${basePath}image/qw.gif`, `${basePath}image/as.gif`, `${basePath}image/hello.gif`]
             },
             afternoon: {
-                outer: ['image/hello.gif', 'image/dias.gif', 'image/asd.gif', 'image/qw.gif', 'image/ax.gif', 'image/jh.gif'],
-                inner: ['image/qw.gif', 'image/ax.gif', 'image/hello.gif', 'image/dias.gif']
+                outer: [`${basePath}image/hello.gif`, `${basePath}image/dias.gif`, `${basePath}image/asd.gif`, `${basePath}image/qw.gif`, `${basePath}image/ax.gif`, `${basePath}image/jh.gif`],
+                inner: [`${basePath}image/qw.gif`, `${basePath}image/ax.gif`, `${basePath}image/hello.gif`, `${basePath}image/dias.gif`]
             },
             night: {
-                outer: ['image/unnamed.gif', 'image/jh.gif', 'image/as.gif', 'image/asd.gif', 'image/hello.gif', 'image/dias.gif'],
-                inner: ['image/as.gif', 'image/unnamed.gif', 'image/jh.gif', 'image/asd.gif']
+                outer: [`${basePath}image/unnamed.gif`, `${basePath}image/jh.gif`, `${basePath}image/as.gif`, `${basePath}image/asd.gif`, `${basePath}image/hello.gif`, `${basePath}image/dias.gif`],
+                inner: [`${basePath}image/as.gif`, `${basePath}image/unnamed.gif`, `${basePath}image/jh.gif`, `${basePath}image/asd.gif`]
             }
         };
 
@@ -1200,9 +1212,9 @@
         // Pre-cargar todas las imágenes para mejor rendimiento
         window.addEventListener('load', () => {
             const allImages = [
-                'image/hello.gif', 'image/dias.gif', 'image/as.gif', 
-                'image/jh.gif', 'image/unnamed.gif', 'image/asd.gif',
-                'image/ax.gif', 'image/qw.gif'
+                `${basePath}image/hello.gif`, `${basePath}image/dias.gif`, `${basePath}image/as.gif`, 
+                `${basePath}image/jh.gif`, `${basePath}image/unnamed.gif`, `${basePath}image/asd.gif`,
+                `${basePath}image/ax.gif`, `${basePath}image/qw.gif`
             ];
             
             allImages.forEach(src => {
