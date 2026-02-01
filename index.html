@@ -1467,13 +1467,15 @@
             
             // Intentar cargar cada extensión hasta encontrar una que exista
             for (const ext of ADMIN_ICON_EXTENSIONS) {
-                const imagePath = `${basePath}image/${ADMIN_ICON_FILENAME}.${ext}`;
+                // Agregar timestamp para evitar caché del navegador (cache-busting)
+                const timestamp = new Date().getTime();
+                const imagePath = `${basePath}image/${ADMIN_ICON_FILENAME}.${ext}?v=${timestamp}`;
                 try {
                     const img = new Image();
                     const imageFound = await new Promise((resolve, reject) => {
                         const timeout = setTimeout(() => {
                             reject(new Error('Timeout'));
-                        }, 3000); // Timeout de 3 segundos
+                        }, 5000); // Timeout de 5 segundos (aumentado)
                         
                         img.onload = () => {
                             clearTimeout(timeout);
@@ -1483,11 +1485,13 @@
                             clearTimeout(timeout);
                             reject(new Error('Image not found'));
                         };
+                        // Forzar recarga sin caché
                         img.src = imagePath;
                     });
                     
                     if (imageFound) {
-                        return imagePath;
+                        // Retornar la ruta con timestamp para evitar caché
+                        return `${basePath}image/${ADMIN_ICON_FILENAME}.${ext}?v=${timestamp}`;
                     }
                 } catch (e) {
                     // Continuar con la siguiente extensión
@@ -1540,6 +1544,19 @@
             }
             
             if (imageToShow) {
+                // Si es imagen del repositorio, actualizar timestamp para evitar caché
+                if (imageSource === 'repo') {
+                    // Actualizar el timestamp en la URL para forzar recarga
+                    const timestamp = new Date().getTime();
+                    if (imageToShow.includes('?v=')) {
+                        // Reemplazar el timestamp existente
+                        imageToShow = imageToShow.replace(/\?v=\d+/, `?v=${timestamp}`);
+                    } else {
+                        // Agregar timestamp si no tiene uno
+                        imageToShow += (imageToShow.includes('?') ? '&' : '?') + 'v=' + timestamp;
+                    }
+                }
+                
                 // Asegurar que la imagen se carga correctamente
                 iconImage.onload = function() {
                     iconImage.style.display = 'block';
@@ -1551,6 +1568,7 @@
                     iconImage.style.display = 'none';
                     iconEmoji.style.display = 'block';
                 };
+                // Cargar la imagen (el timestamp ya está en la URL)
                 iconImage.src = imageToShow;
                 
                 // Mostrar botones según si es admin
@@ -2131,6 +2149,17 @@
 
         // Verificar cambio de período cada minuto
         setInterval(updateGreeting, 60000);
+
+        // Recargar imagen del administrador periódicamente (cada 2 minutos)
+        // Esto asegura que los usuarios vean la imagen actualizada
+        setInterval(() => {
+            // Solo recargar si no es administrador (para no interrumpir su trabajo)
+            if (!isAdmin()) {
+                loadAdminImage().catch(err => {
+                    console.log('Recargando imagen del administrador...');
+                });
+            }
+        }, 120000); // Cada 2 minutos
 
         // Pre-cargar todas las imágenes para mejor rendimiento
         window.addEventListener('load', () => {
